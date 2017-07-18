@@ -22,7 +22,6 @@ def emit_token(tok, lit = nil)
     lit = lit.to_s.gsub(/\n/, ' ')
     "#{start}#{tok}|\"#{lit}\"\n"
   else
-    # "#{start}#{tok}|#{tok}\n"
     "#{start}#{tok}\n"
   end
 end
@@ -34,35 +33,38 @@ def traverse_object(repr, o, oname = nil)
   case o
   when Hash
     repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('{')
-    o.each do |k, v|
+    repr += emit_token('SYNTAX', '{')
+    l = o.count - 1
+    o.keys.each_with_index do |k, i|
+      v = o[k]
       repr += emit_token('KEY', k)
       opi = $pi
       repr = traverse_object(repr, v, k)
       $pi = opi
-      repr += emit_token(',')
+      repr += emit_token('SYNTAX', ',') if i < l
     end
-    repr += emit_token('}')
+    repr += emit_token('SYNTAX', '}')
   when Array
     repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('[')
+    repr += emit_token('SYNTAX', '[')
+    l = o.count - 1
     o.each_with_index do |r, i|
       repr += emit_token('INDEX', i)
       opi = $pi
       repr = traverse_object(repr, r)
       $pi = opi
-      repr += emit_token(',')
+      repr += emit_token('SYNTAX',',') if i < l
     end
-    repr += emit_token(']')
+    repr += emit_token('SYNTAX',']')
   when NilClass
     repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('NULL')
+    repr += emit_token('NULL', 'NULL')
   when TrueClass
     repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('TRUE')
+    repr += emit_token('BOOLEAN', 'TRUE')
   when FalseClass
     repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('FALSE')
+    repr += emit_token('BOOLEAN', 'FALSE')
   when String
     repr += emit_token('IDENT', oname) if oname
     o.split("\n").each do |ol|

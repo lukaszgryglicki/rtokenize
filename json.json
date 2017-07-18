@@ -1,11 +1,13 @@
 {
   "json": [
     "rigid",
-    "better for data interchange"
+    "better for data interchange",
+    false
   ],
   "yaml": [
     "slim and flexible",
-    "better for configuration"
+    "better for configuration",
+    true
   ],
   "object": {
     "key": "value",
@@ -19,7 +21,13 @@
       {
         "integer": 1
       }
-    ]
+    ],
+    "flo": 1.234,
+    "bigN": 643287462387423,
+    "aDateTime": "2017-07-16T22:35:12Z",
+    "aDate": "2017-07-16",
+    "aTime": "22:35:12",
+    "badFlo": 1e12
   },
   "paragraph": "Blank lines denote\nparagraph breaks\n",
   "content": "Or we\ncan auto\nconvert line breaks\nto save space"

@@ -5,27 +5,30 @@
 # { foo: 'bar' }
 
 json:
-  - rigid
-  - better for data interchange
+- rigid
+- better for data interchange
+- false
 yaml:
-  - slim and flexible
-  - better for configuration
+- slim and flexible
+- better for configuration
+- true
 object:
   key: value
   array:
-    - null_value:
-    - boolean: true
-    - boolean: false
-    - integer: 1
-    - float: 1.23
-    - bignum: 62138371291283982162139
-  155: question?
-paragraph: >
-   Blank lines denote
-
-   paragraph breaks
+  - null_value: 
+  - boolean: true
+  - integer: 1
+  flo: 1.234
+  bigN: 643287462387423
+  aDateTime: '2017-07-16T22:35:12Z'
+  aDate: '2017-07-16'
+  aTime: '22:35:12'
+  badFlo: 1e10
+paragraph: |
+  Blank lines denote
+  paragraph breaks
 content: |-
-   Or we
-   can auto
-   convert line breaks
-   to save space
+  Or we
+  can auto
+  convert line breaks
+  to save space
