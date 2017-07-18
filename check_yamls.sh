@@ -2,7 +2,7 @@
 for f in `find ../kubernetes_original/ -type f -iname "*.y*ml"`
 do
 	ls -l "$f"
-	res=`./rtokenize.rb --yaml < "$f" > out`
+	res=`./rtokenize.rb --split 50 --part-size 1 --yaml < "$f" > out`
 	rc=$?
 	if [ $rc -ne 0 ]
 	then

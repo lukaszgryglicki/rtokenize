@@ -5,48 +5,46 @@ def panic(why)
   exit 1
 end
 
-def lookup_token_yaml(tp, val, buf, bufdc, pos)
+def lookup_token(ft, tp, val, buf, bufdc, pos)
   tp = tp.downcase
   STDERR.puts [tp, val] unless val[0] == '"'
   val = val[1..-2]
-  case tp
-  when 'type', 'index', 'syntax'
-  when 'ident', 'key', 'string', 'symbol', 'int', 'bignum'
-    npos = buf.index(val, pos)
-    if npos
-       # puts "#{tp}: #{val} found at #{npos} starting at #{pos}"
-       pos = npos
-    else
-      STDERR.puts "#{tp}: '#{val}' not found starting at #{pos}"
-    end
-  when 'boolean', 'float', 'date', 'time'
-    valdc = val.downcase
-    npos = bufdc.index(valdc, pos)
-    if npos
-       # puts "#{tp}: #{valdc} found at #{npos} starting at #{pos}"
-       pos = npos
-    else
-      STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}"
-    end
+ 
+  skip_types = []
+  exact_types = []
+  dc_types = []
+  case ft
+  when 'y'
+    skip_types = %w(type index syntax)
+    exact_types = %w(ident key string symbol int bignum)
+    dc_types = %w(boolean float date time)
+  when 'j'
+    skip_types = %w(type index)
+    exact_types = %w(ident syntax key string symbol int bignum)
+    dc_types = %w(boolean float date time)
+  else
+    panic("Unknown token file type: #{ft}")
   end
-  pos
-end
-    
-def lookup_token_json(tp, val, buf, bufdc, pos)
-  tp = tp.downcase
-  STDERR.puts [tp, val] unless val[0] == '"'
-  val = val[1..-2]
+
   case tp
-  when 'type', 'index'
-  when 'ident', 'syntax', 'key', 'string', 'symbol', 'int', 'bignum'
+  when *skip_types
+  when *exact_types
     npos = buf.index(val, pos)
+    if tp == 'string' && !npos
+      val = val.gsub(/'/, "''")
+      npos = buf.index(val, pos)
+    end
+    if tp == 'string' && !npos
+      val = val.gsub(/"/, '\"')
+      npos = buf.index(val, pos)
+    end
     if npos
        # puts "#{tp}: #{val} found at #{npos} starting at #{pos}"
        pos = npos
     else
       STDERR.puts "#{tp}: '#{val}' not found starting at #{pos}"
     end
-  when 'boolean', 'float', 'date', 'time'
+  when *dc_types
     valdc = val.downcase
     npos = bufdc.index(valdc, pos)
     if npos
@@ -72,8 +70,7 @@ def rlocalize(args)
     ttype = ta[0]
     tvalue = ta[1]
     panic("Unknown token type: #{ttype}") unless types.include?(ttype)
-    pos = lookup_token_json(ttype, tvalue, buf, bufdc, pos) if ftype == 'j'
-    pos = lookup_token_yaml(ttype, tvalue, buf, bufdc, pos) if ftype == 'y'
+    lookup_token(ftype, ttype, tvalue, buf, bufdc, pos)
     # puts "Type: #{ttype}, Value: '#{tvalue}' --> #{pos}"
   end
 end

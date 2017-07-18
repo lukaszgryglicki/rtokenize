@@ -7,6 +7,8 @@ Options:
 - `-y|--yaml` - tokenize YAML file
 - `-h|--header` - Generate `begin_unit` header and `end_unit` footer
 - `-n|--numbers` - Generate numeric stats (first number is Nth call of recursive tokenizer, second number is Nth token within single call)
+- `-s N|--split N` - Split string tokens longer than given N
+- `-p P|--part-size P` - Split string part size (will split strings longer than N into parts not longer than P), specif P=1 to split every word in strings longer than N
 
 Tool reads from standard input and writes to standard output.
 Eventual errors are written to standard error.

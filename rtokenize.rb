@@ -26,6 +26,38 @@ def emit_token(tok, lit = nil)
   end
 end
 
+def split_if_needed(str)
+  return [str] unless $opts.key?(:split) and $opts.key?(:split_part_size)
+  spl = $opts[:split]
+  sps = $opts[:split_part_size]
+  sl = str.length
+  return [str] unless sl > spl
+  stra = str.split(' ')
+  s = []
+  res = []
+  ps = spl
+  stra.each do |word|
+    tmp = s + [word]
+    #STDERR.puts "word: #{word} --> tmp: #{tmp.to_s}, join_len: #{tmp.join(' ').length}"
+    if tmp.join(' ').length <= ps
+      s << word
+      #STDERR.puts "added word: #{word}, s: #{s.to_s}"
+    else
+      res << s.join(' ') if s.length > 0
+      s = [word]
+      ps = sps
+      #STDERR.puts "Added phrase: res: #{res.to_s}, s: #{s.to_s}"
+    end
+  end
+  if s.length > 0
+    res << s.join(' ')
+    #STDERR.puts "Added final: res: #{res.to_s}, s: #{s.to_s}"
+  end
+  #STDERR.puts [stra, str, res, s].map(&:to_s)
+  #STDERR.puts res.to_s
+  res
+end
+
 def traverse_object(repr, o, oname = nil)
   $toi += 1
   $pi = 0
@@ -68,7 +100,8 @@ def traverse_object(repr, o, oname = nil)
   when String
     repr += emit_token('IDENT', oname) if oname
     o.split("\n").each do |ol|
-      repr += emit_token('STRING', ol)
+      oa = split_if_needed(ol)
+      oa.each { |osp| repr += emit_token('STRING', osp) }
     end
   when Symbol
     repr += emit_token('IDENT', oname) if oname
@@ -106,8 +139,14 @@ OptionParser.new do |opts|
   opts.on("-n", "--numbers", "Output parsing numbers") do |v|
     options[:nums] = true
   end
-  opts.on("-h", "--header", "Output begin_unit & end_unit") do |v|
+  opts.on("-h", "--header", "Output begin_unit & end_unit") do
     options[:header] = true
+  end
+  opts.on("-s N", "--split N", Integer, "Split strings longer than N") do |n|
+    options[:split] = n
+  end
+  opts.on("-p N", "--part-size N", Integer, "Split string part size P for strings longer than N") do |p|
+    options[:split_part_size] = p
   end
 end.parse!
 
