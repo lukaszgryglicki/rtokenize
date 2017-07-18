@@ -17,11 +17,11 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
   when 'y'
     skip_types = %w(type index syntax)
     exact_types = %w(ident key string symbol int bignum)
-    dc_types = %w(boolean float date time)
+    dc_types = %w(float date time)
   when 'j'
     skip_types = %w(type index)
     exact_types = %w(ident syntax key string symbol int bignum)
-    dc_types = %w(boolean float date time)
+    dc_types = %w(float date time)
   else
     panic("Unknown token file type: #{ft}")
   end
@@ -30,28 +30,69 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
   when *skip_types
   when *exact_types
     npos = buf.index(val, pos)
-    if tp == 'string' && !npos
+    # if tp == 'string' && !npos # XXX
+    if !npos
       val = val.gsub(/'/, "''")
       npos = buf.index(val, pos)
     end
-    if tp == 'string' && !npos
+    if !npos
       val = val.gsub(/"/, '\"')
       npos = buf.index(val, pos)
     end
     if npos
-       # puts "#{tp}: #{val} found at #{npos} starting at #{pos}"
+       # puts "full: #{tp}: #{val} found at #{npos} starting at #{pos}"
        pos = npos
     else
-      STDERR.puts "#{tp}: '#{val}' not found starting at #{pos}"
+      oldpos = pos
+      # STDERR.puts "#{tp}: '#{val}' not found starting at #{pos}"
+      val.split.each do |word|
+        npos = buf.index(word, pos)
+        if npos
+          # puts "word: #{tp}: #{word} found at #{npos} starting at #{pos}"
+          pos = npos
+        else
+          nwords = word.split(/[^a-zA-Z0-9_ ]/).reject { |s| s == '' }
+	  nwords.each do |w|
+            puts "'#{val}' --> '#{word}' --> '#{w}', pos=#{pos}"
+            npos = buf.index(w, pos)
+            if npos
+              # puts "problematic #{tp}: #{word} found at #{npos} starting at #{pos}"
+              pos = npos
+            else
+              STDERR.puts "splitted word: #{tp}: '#{w}'/'#{word}/'#{val}' not found starting at #{pos}"
+            end
+          end
+        end
+      end
+      if pos == oldpos
+        STDERR.puts "VERY BAD: #{tp}: '#{val}' not found starting at #{pos}" # XXX
+        # panic "bye bye cruel world!"
+      end
     end
   when *dc_types
     valdc = val.downcase
+    valdc = valdc.split(' ').first if tp == 'time'
     npos = bufdc.index(valdc, pos)
     if npos
-       # puts "#{tp}: #{valdc} found at #{npos} starting at #{pos}"
+       # puts "dc: #{tp}: #{valdc} found at #{npos} starting at #{pos}"
        pos = npos
     else
-      STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}"
+      STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}" unless npos
+    end
+  when 'boolean'
+    valdc = val.downcase
+    vals = %w(off no false disabled) if valdc == 'false'
+    vals = %w(on yes true enabled) if valdc == 'true'
+    npos = {}
+    vals.each do |v|
+      npos[v] = bufdc.index(v, pos)
+    end
+    npos = npos.values.compact.min
+    if npos
+      # puts "boolean: #{tp}: #{valdc}/equivalent found at #{npos} starting at #{pos}"
+      pos = npos
+    else
+      STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}" unless npos
     end
   end
   pos

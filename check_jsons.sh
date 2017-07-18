@@ -2,7 +2,8 @@
 for f in `find ../kubernetes_original/ -type f -iname "*.json"`
 do
 	ls -l "$f"
-	res=`./rtokenize.rb --split 50 --part-size 1 --json < $f > out`
+	#res=`./rtokenize.rb --split 50 --part-size 1 --json < $f > out`
+	res=`./rtokenize.rb --json < $f > out`
 	rc=$?
 	if [ $rc -ne 0 ]
 	then
