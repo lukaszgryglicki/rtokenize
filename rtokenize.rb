@@ -74,6 +74,9 @@ def traverse_object(repr, o, oname = nil)
   when Float
     repr += emit_token('IDENT', oname) if oname
     repr += emit_token('FLOAT', o)
+  when Bignum
+    repr += emit_token('IDENT', oname) if oname
+    repr += emit_token('BIGNUM', o)
   when Time
     repr += emit_token('IDENT', oname) if oname
     repr += emit_token('TIME', o)

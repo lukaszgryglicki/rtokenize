@@ -18,6 +18,7 @@ object:
     - boolean: false
     - integer: 1
     - float: 1.23
+    - bignum: 62138371291283982162139
   155: question?
 paragraph: >
    Blank lines denote
