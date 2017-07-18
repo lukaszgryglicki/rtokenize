@@ -18,9 +18,9 @@ def emit_token(tok, lit = nil)
   $pi += 1
   if lit
     lit = lit.to_s.gsub(/\n/, ' ')
-    "#{$toi}-#{$pi}\t#{tok}|\"#{lit}\"\n"
+    "#{$toi}:#{$pi}\t#{tok}|\"#{lit}\"\n"
   else
-    "#{$toi}-#{$pi}\t#{tok}\n"
+    "#{$toi}:#{$pi}\t#{tok}|#{tok}\n"
   end
 end
 
