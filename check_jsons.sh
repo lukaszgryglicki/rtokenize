@@ -2,10 +2,17 @@
 for f in `find ../kubernetes_original/ -type f -iname "*.json"`
 do
 	# ls -l "$f"
-	res=`./rtokenize.rb -j < $f > out`
+	res=`./rtokenize.rb --json < $f > out`
 	rc=$?
 	if [ $rc -ne 0 ]
 	then
-		echo "$f ==> $rc"
+		echo "Tokenize $f ==> $rc"
+	fi
+	res=`./rlocalize.rb json out "$f" 0`
+	rc=$?
+	if [ $rc -ne 0 ]
+	then
+		echo "Localize $f => $rc"
 	fi
 done
+rm -f ./out

@@ -17,7 +17,7 @@ def lookup_token_yaml(tp, val, buf, bufdc, pos)
        # puts "#{tp}: #{val} found at #{npos} starting at #{pos}"
        pos = npos
     else
-      STDERR.puts "#{tp}: #{val} not found starting at #{pos}"
+      STDERR.puts "#{tp}: '#{val}' not found starting at #{pos}"
     end
   when 'boolean', 'float', 'date', 'time'
     valdc = val.downcase
@@ -26,7 +26,7 @@ def lookup_token_yaml(tp, val, buf, bufdc, pos)
        # puts "#{tp}: #{valdc} found at #{npos} starting at #{pos}"
        pos = npos
     else
-      STDERR.puts "#{tp}: #{valdc} not found starting at #{pos}"
+      STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}"
     end
   end
   pos
@@ -44,7 +44,7 @@ def lookup_token_json(tp, val, buf, bufdc, pos)
        # puts "#{tp}: #{val} found at #{npos} starting at #{pos}"
        pos = npos
     else
-      STDERR.puts "#{tp}: #{val} not found starting at #{pos}"
+      STDERR.puts "#{tp}: '#{val}' not found starting at #{pos}"
     end
   when 'boolean', 'float', 'date', 'time'
     valdc = val.downcase
@@ -53,7 +53,7 @@ def lookup_token_json(tp, val, buf, bufdc, pos)
        # puts "#{tp}: #{valdc} found at #{npos} starting at #{pos}"
        pos = npos
     else
-      STDERR.puts "#{tp}: #{valdc} not found starting at #{pos}"
+      STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}"
     end
   end
   pos
