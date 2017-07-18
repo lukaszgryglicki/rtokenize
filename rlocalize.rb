@@ -70,7 +70,7 @@ def rlocalize(args)
     ttype = ta[0]
     tvalue = ta[1]
     panic("Unknown token type: #{ttype}") unless types.include?(ttype)
-    lookup_token(ftype, ttype, tvalue, buf, bufdc, pos)
+    pos = lookup_token(ftype, ttype, tvalue, buf, bufdc, pos)
     # puts "Type: #{ttype}, Value: '#{tvalue}' --> #{pos}"
   end
 end
