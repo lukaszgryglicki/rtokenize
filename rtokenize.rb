@@ -13,14 +13,17 @@ end
 
 $toi = 0
 $pi = 0
+$opts = nil
 
 def emit_token(tok, lit = nil)
   $pi += 1
+  start = $opts.key?(:nums) ? "#{$toi}:#{$pi}\t" : ''
   if lit
     lit = lit.to_s.gsub(/\n/, ' ')
-    "#{$toi}:#{$pi}\t#{tok}|\"#{lit}\"\n"
+    "#{start}#{tok}|\"#{lit}\"\n"
   else
-    "#{$toi}:#{$pi}\t#{tok}|#{tok}\n"
+    # "#{start}#{tok}|#{tok}\n"
+    "#{start}#{tok}\n"
   end
 end
 
@@ -98,6 +101,12 @@ OptionParser.new do |opts|
   opts.on("-y", "--yaml", "Input is YAML") do |v|
     options[:yaml] = true
   end
+  opts.on("-n", "--numbers", "Output parsing numbers") do |v|
+    options[:nums] = true
+  end
+  opts.on("-h", "--header", "Output begin_unit & end_unit") do |v|
+    options[:header] = true
+  end
 end.parse!
 
 parser = nil
@@ -137,12 +146,15 @@ while true
   break
 end
 
-repr = "-:-\tbegin_unit\n"
+$opts = options
+repr = options.key?(:header) ? (options.key?(:nums) ? "-:-\tbegin_unit\n" : "begin_unit\n") : ''
 begin
   repr = traverse_object(repr, data)
-rescue Exception => e
-  panic(3, "Traverse error", e)
+#rescue Exception => e
+#  panic(3, "Traverse error", e)
 end
-repr += "-:-\tend_unit\n"
+if options.key?(:header)
+  repr += options.key?(:nums) ? "-:-\tend_unit\n" : "end_unit\n"
+end
 
 puts repr
