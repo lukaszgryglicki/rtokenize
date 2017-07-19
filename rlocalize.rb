@@ -136,11 +136,13 @@ def rlocalize(args)
   bufdc = buf.downcase
   types = %w(BIGNUM BOOLEAN DATE FILETYPE FLOAT IDENT INDEX INT KEY MULTI NULL STRING SYMBOL SYNTAX TIME TYPE)
   converted = false
+  localized = false
   lines = []
   File.readlines(ftoken).each do |line|
     ta = line.strip.split('|')
     ttype = ta[0]
     tvalue = ta[1]
+    localized = true if ta.length >= 3
     panic("Unknown token type: #{ttype}") unless types.include?(ttype)
     pos = lookup_token(ftype, ttype, tvalue, buf, bufdc, pos)
     if ftype == 'j' && $multi && !converted
@@ -151,7 +153,7 @@ def rlocalize(args)
     STDERR.puts "Type: #{ttype}, Value: '#{tvalue}' --> #{pos}" if $verbose
     lines << "#{line.strip}|#{apos}"
   end
-  File.write(ftoken, lines.join("\n")+"\n")
+  File.write(ftoken, lines.join("\n")+"\n") unless localized
   #puts lines.join("\n")
 end
 
