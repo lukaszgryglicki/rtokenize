@@ -5,6 +5,10 @@ def panic(why)
   exit 1
 end
 
+# Debugging output
+# $verbose = false
+$verbose = true
+
 def lookup_token(ft, tp, val, buf, bufdc, pos)
   tp = tp.downcase
   STDERR.puts [tp, val] unless val[0] == '"'
@@ -31,6 +35,24 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
   when *exact_types
     npos = buf.index(val, pos)
     # if tp == 'string' && !npos # XXX
+    if tp == 'int' && !npos
+      vals = [
+        '0' + val.to_i.to_s(010), 
+        '0x' + val.to_i.to_s(0x10), 
+        '0X' + val.to_i.to_s(0X10)
+      ]
+      npos = {}
+      vals.each do |v|
+        npos[v] = buf.index(v, pos)
+      end
+      npos = npos.values.compact.min
+      if npos
+        STDERR.puts "int: #{tp}: #{val}/equivalent found at #{npos} starting at #{pos}" if $verbose
+        pos = npos
+      else
+        STDERR.puts "int: #{tp}: '#{val}' not found starting at #{pos}" unless npos
+      end
+    end
     if !npos
       val = val.gsub(/'/, "''")
       npos = buf.index(val, pos)
@@ -40,32 +62,32 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
       npos = buf.index(val, pos)
     end
     if npos
-       # puts "full: #{tp}: #{val} found at #{npos} starting at #{pos}"
+       STDERR.puts "full: #{tp}: #{val} found at #{npos} starting at #{pos}" if $verbose
        pos = npos
     else
       oldpos = pos
-      # STDERR.puts "#{tp}: '#{val}' not found starting at #{pos}"
+      STDERR.puts "#{tp}: '#{val}' not found starting at #{pos}" if $verbose
       val.split.each do |word|
         npos = buf.index(word, pos)
         if npos
-          # puts "word: #{tp}: #{word} found at #{npos} starting at #{pos}"
+          STDERR.puts "word: #{tp}: #{word} found at #{npos} starting at #{pos}" if $verbose
           pos = npos
         else
           nwords = word.split(/[^a-zA-Z0-9_ ]/).reject { |s| s == '' }
-	  nwords.each do |w|
-            puts "'#{val}' --> '#{word}' --> '#{w}', pos=#{pos}"
+          nwords.each do |w|
+            STDERR.puts "'#{val}' --> '#{word}' --> '#{w}', pos=#{pos}" if $verbose
             npos = buf.index(w, pos)
             if npos
-              # puts "problematic #{tp}: #{word} found at #{npos} starting at #{pos}"
+              STDERR.puts "problematic #{tp}: #{word} found at #{npos} starting at #{pos}" if $verbose
               pos = npos
             else
-              STDERR.puts "splitted word: #{tp}: '#{w}'/'#{word}/'#{val}' not found starting at #{pos}"
+              STDERR.puts "splitted word: #{tp}: '#{w}'/'#{word}/'#{val}' not found starting at #{pos}" if $verbose
             end
           end
         end
       end
       if pos == oldpos
-        STDERR.puts "VERY BAD: #{tp}: '#{val}' not found starting at #{pos}" # XXX
+        STDERR.puts "VERY BAD: #{tp}: '#{val}' not found starting at #{pos}"
         # panic "bye bye cruel world!"
       end
     end
@@ -74,7 +96,7 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
     valdc = valdc.split(' ').first if tp == 'time'
     npos = bufdc.index(valdc, pos)
     if npos
-       # puts "dc: #{tp}: #{valdc} found at #{npos} starting at #{pos}"
+       STDERR.puts "dc: #{tp}: #{valdc} found at #{npos} starting at #{pos}" if $verbose
        pos = npos
     else
       STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}" unless npos
@@ -89,10 +111,10 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
     end
     npos = npos.values.compact.min
     if npos
-      # puts "boolean: #{tp}: #{valdc}/equivalent found at #{npos} starting at #{pos}"
+      STDERR.puts "boolean: #{tp}: #{valdc}/equivalent found at #{npos} starting at #{pos}" if $verbose
       pos = npos
     else
-      STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}" unless npos
+      STDERR.puts "boolean: #{tp}: '#{valdc}' not found starting at #{pos}" unless npos
     end
   end
   pos
@@ -104,6 +126,8 @@ def rlocalize(args)
   forig = args[2]
   pos = (args[3] || 0).to_i
   buf = File.read(forig)
+  buf.gsub!('{{', '<<')
+  buf.gsub!('}}', '>>')
   bufdc = buf.downcase
   types = %w(BIGNUM BOOLEAN DATE FLOAT IDENT INDEX INT KEY NULL STRING SYMBOL SYNTAX TIME TYPE)
   File.readlines(ftoken).each do |line|
@@ -112,7 +136,7 @@ def rlocalize(args)
     tvalue = ta[1]
     panic("Unknown token type: #{ttype}") unless types.include?(ttype)
     pos = lookup_token(ftype, ttype, tvalue, buf, bufdc, pos)
-    # puts "Type: #{ttype}, Value: '#{tvalue}' --> #{pos}"
+    STDERR.puts "Type: #{ttype}, Value: '#{tvalue}' --> #{pos}" if $verbose
   end
 end
 

@@ -156,6 +156,8 @@ parser = YAML if options.key?(:yaml)
 panic(1, 'No parser defined', nil) unless parser
 
 in_data = STDIN.read
+in_data.gsub!('{{', '<<')
+in_data.gsub!('}}', '>>')
 parse_error = 0
 while true
   data = ''
@@ -164,18 +166,15 @@ while true
     data = parser.load(in_data)
   rescue Exception => e
     if parse_error == 0
-      in_data.gsub!('{{', '<<')
-      in_data.gsub!('}}', '>>')
-    elsif parse_error == 1
       in_data.gsub!('{%', '<%')
       in_data.gsub!('%}', '%>')
-    elsif parse_error == 2
+    elsif parse_error == 1
       in_data.gsub!(/<%.*%>/, '')
-    elsif parse_error == 3
+    elsif parse_error == 2
       in_data.gsub!(/\${.*}/, '')
-    elsif parse_error == 4
+    elsif parse_error == 3
       in_data.gsub!(/\$(.*)/, '')
-    elsif parse_error == 5
+    elsif parse_error == 4
       in_data.gsub!(/<<.*>>/, '')
       #STDERR.puts in_data
     else

@@ -1,5 +1,8 @@
-../kubernetes_original/cluster/juju/layers/kubernetes-worker/templates/microbot-example.yaml
-../kubernetes_original/cluster/gce/gci/master.yaml
-../kubernetes_original/cluster/addons/cluster-monitoring/influxdb/influxdb-grafana-controller.yaml
-../kubernetes_original/federation/manifests/federation-apiserver-secrets.yaml
+# Only comments:
 ../kubernetes_original/examples/newrelic/newrelic-config.yaml
+
+# Duplicated keys in YAML:
+# character_classes:
+../kubernetes_original/cluster/openstack-heat/kubernetes-heat/kubeminion.yaml
+# env:
+../kubernetes_original/cluster/addons/cluster-monitoring/influxdb/influxdb-grafana-controller.yaml
