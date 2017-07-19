@@ -208,6 +208,8 @@ end
 $opts = options
 repr = options.key?(:header) ? (options.key?(:nums) ? "-:-\tbegin_unit\n" : "begin_unit\n") : ''
 begin
+  repr += emit_token('FILETYPE', 'json') if options.key?(:json)
+  repr += emit_token('FILETYPE', 'yaml') if options.key?(:yaml)
   repr += emit_token('MULTI', 'MULTI') if multi_json
   repr = traverse_object(repr, data)
 #rescue Exception => e

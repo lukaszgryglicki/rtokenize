@@ -20,11 +20,11 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
   dc_types = []
   case ft
   when 'y'
-    skip_types = %w(type index syntax)
+    skip_types = %w(type index syntax filetype)
     exact_types = %w(ident key string symbol int bignum)
     dc_types = %w(float date time)
   when 'j'
-    skip_types = %w(type index)
+    skip_types = %w(type index filetype)
     exact_types = %w(ident syntax key string symbol int bignum)
     dc_types = %w(float date time)
   else
@@ -134,7 +134,7 @@ def rlocalize(args)
     buf.gsub!('}}', '>>')
   end
   bufdc = buf.downcase
-  types = %w(BIGNUM BOOLEAN DATE FLOAT IDENT INDEX INT KEY MULTI NULL STRING SYMBOL SYNTAX TIME TYPE)
+  types = %w(BIGNUM BOOLEAN DATE FILETYPE FLOAT IDENT INDEX INT KEY MULTI NULL STRING SYMBOL SYNTAX TIME TYPE)
   converted = false
   lines = []
   File.readlines(ftoken).each do |line|
@@ -151,7 +151,7 @@ def rlocalize(args)
     STDERR.puts "Type: #{ttype}, Value: '#{tvalue}' --> #{pos}" if $verbose
     lines << "#{line.strip}|#{apos}"
   end
-  File.write(ftoken, lines.join("\n"))
+  File.write(ftoken, lines.join("\n")+"\n")
   #puts lines.join("\n")
 end
 
