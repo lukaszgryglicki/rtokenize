@@ -156,8 +156,10 @@ parser = YAML if options.key?(:yaml)
 panic(1, 'No parser defined', nil) unless parser
 
 in_data = STDIN.read
-in_data.gsub!('{{', '<<')
-in_data.gsub!('}}', '>>')
+if options.key?(:yaml)
+  in_data.gsub!('{{', '<<')
+  in_data.gsub!('}}', '>>')
+end
 parse_error = 0
 while true
   data = ''

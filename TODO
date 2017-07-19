@@ -6,3 +6,6 @@
 ../kubernetes_original/cluster/openstack-heat/kubernetes-heat/kubeminion.yaml
 # env:
 ../kubernetes_original/cluster/addons/cluster-monitoring/influxdb/influxdb-grafana-controller.yaml
+
+# Parse error:
+../kubernetes_original/cluster/openstack-heat/kubernetes-heat/kubecluster.yaml

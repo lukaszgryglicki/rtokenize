@@ -6,8 +6,8 @@ def panic(why)
 end
 
 # Debugging output
-# $verbose = false
-$verbose = true
+$verbose = false
+# $verbose = true
 
 def lookup_token(ft, tp, val, buf, bufdc, pos)
   tp = tp.downcase
@@ -126,8 +126,10 @@ def rlocalize(args)
   forig = args[2]
   pos = (args[3] || 0).to_i
   buf = File.read(forig)
-  buf.gsub!('{{', '<<')
-  buf.gsub!('}}', '>>')
+  if ftype == 'y'
+    buf.gsub!('{{', '<<')
+    buf.gsub!('}}', '>>')
+  end
   bufdc = buf.downcase
   types = %w(BIGNUM BOOLEAN DATE FLOAT IDENT INDEX INT KEY NULL STRING SYMBOL SYNTAX TIME TYPE)
   File.readlines(ftoken).each do |line|
