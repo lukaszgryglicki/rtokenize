@@ -136,6 +136,7 @@ def rlocalize(args)
   bufdc = buf.downcase
   types = %w(BIGNUM BOOLEAN DATE FLOAT IDENT INDEX INT KEY MULTI NULL STRING SYMBOL SYNTAX TIME TYPE)
   converted = false
+  lines = []
   File.readlines(ftoken).each do |line|
     ta = line.strip.split('|')
     ttype = ta[0]
@@ -148,7 +149,9 @@ def rlocalize(args)
     end
     apos = $multi ? pos - 1 : pos
     STDERR.puts "Type: #{ttype}, Value: '#{tvalue}' --> #{pos}" if $verbose
+    lines << "#{line.strip}|#{apos}"
   end
+  File.write(ftoken, lines.join("\n"))
 end
 
 if ARGV.size < 2
