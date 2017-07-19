@@ -9,6 +9,7 @@ end
 $verbose = false
 # $verbose = true
 
+$multi = false
 def lookup_token(ft, tp, val, buf, bufdc, pos)
   tp = tp.downcase
   STDERR.puts [tp, val] unless val[0] == '"'
@@ -116,6 +117,8 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
     else
       STDERR.puts "boolean: #{tp}: '#{valdc}' not found starting at #{pos}" unless npos
     end
+  when 'multi'
+    $multi = true
   end
   pos
 end
@@ -131,13 +134,19 @@ def rlocalize(args)
     buf.gsub!('}}', '>>')
   end
   bufdc = buf.downcase
-  types = %w(BIGNUM BOOLEAN DATE FLOAT IDENT INDEX INT KEY NULL STRING SYMBOL SYNTAX TIME TYPE)
+  types = %w(BIGNUM BOOLEAN DATE FLOAT IDENT INDEX INT KEY MULTI NULL STRING SYMBOL SYNTAX TIME TYPE)
+  converted = false
   File.readlines(ftoken).each do |line|
     ta = line.strip.split('|')
     ttype = ta[0]
     tvalue = ta[1]
     panic("Unknown token type: #{ttype}") unless types.include?(ttype)
     pos = lookup_token(ftype, ttype, tvalue, buf, bufdc, pos)
+    if ftype == 'j' && $multi && !converted
+      buf = '[' + buf.gsub("}\n{", "},{") + ']'
+      converted = true
+    end
+    apos = $multi ? pos - 1 : pos
     STDERR.puts "Type: #{ttype}, Value: '#{tvalue}' --> #{pos}" if $verbose
   end
 end

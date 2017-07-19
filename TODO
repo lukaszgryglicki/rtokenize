@@ -1,3 +1,4 @@
+# YAMLs:
 # Only comments:
 ../kubernetes_original/examples/newrelic/newrelic-config.yaml
 
@@ -9,3 +10,13 @@
 
 # Parse error:
 ../kubernetes_original/cluster/openstack-heat/kubernetes-heat/kubecluster.yaml
+
+# JSONs:
+# Empty:
+../kubernetes_original/api/swagger-spec/storage.authorization.k8s.io_v1beta1.json
+
+# Invalid JSON (part of some test suite):
+../kubernetes_original/pkg/api/validation/testdata/v1/invalidPod3.json
+
+# Multi object JSONs (already valid)
+# ../kubernetes_original/hack/testdata/multi-resource-json.json

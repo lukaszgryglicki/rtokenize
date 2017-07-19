@@ -161,26 +161,39 @@ if options.key?(:yaml)
   in_data.gsub!('}}', '>>')
 end
 parse_error = 0
+multi_json = false
+
 while true
   data = ''
   begin
     # STDERR.puts "PARSE: error=#{parse_error}, len=#{in_data.length}"
     data = parser.load(in_data)
   rescue Exception => e
-    if parse_error == 0
-      in_data.gsub!('{%', '<%')
-      in_data.gsub!('%}', '%>')
-    elsif parse_error == 1
-      in_data.gsub!(/<%.*%>/, '')
-    elsif parse_error == 2
-      in_data.gsub!(/\${.*}/, '')
-    elsif parse_error == 3
-      in_data.gsub!(/\$(.*)/, '')
-    elsif parse_error == 4
-      in_data.gsub!(/<<.*>>/, '')
-      #STDERR.puts in_data
+    if options.key?(:yaml)
+      if parse_error == 0
+        in_data.gsub!('{%', '<%')
+        in_data.gsub!('%}', '%>')
+      elsif parse_error == 1
+        in_data.gsub!(/<%.*%>/, '')
+      elsif parse_error == 2
+        in_data.gsub!(/\${.*}/, '')
+      elsif parse_error == 3
+        in_data.gsub!(/\$(.*)/, '')
+      elsif parse_error == 4
+        in_data.gsub!(/<<.*>>/, '')
+        #STDERR.puts in_data
+      else
+        panic(2, "YAML Parse error", e) 
+      end
+    elsif options.key?(:json)
+      if parse_error == 0
+        in_data = '[' + in_data.gsub("}\n{", "},{") + ']'
+        multi_json = true
+      else
+        panic(2, "JSON Parse error", e) 
+      end
     else
-      panic(2, "Parse error", e) 
+       panic(3, "Unknown language #{options.to_s}", e)
     end
     parse_error += 1
     next
@@ -188,9 +201,14 @@ while true
   break
 end
 
+if multi_json && data.length == 0
+  panic(4, "Empty JSON in #{in_data[1..-2]}", nil)
+end
+
 $opts = options
 repr = options.key?(:header) ? (options.key?(:nums) ? "-:-\tbegin_unit\n" : "begin_unit\n") : ''
 begin
+  repr += emit_token('MULTI', 'MULTI') if multi_json
   repr = traverse_object(repr, data)
 #rescue Exception => e
 #  panic(3, "Traverse error", e)
