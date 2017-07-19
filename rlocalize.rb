@@ -152,6 +152,7 @@ def rlocalize(args)
     lines << "#{line.strip}|#{apos}"
   end
   File.write(ftoken, lines.join("\n"))
+  #puts lines.join("\n")
 end
 
 if ARGV.size < 2

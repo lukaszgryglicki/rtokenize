@@ -1,14 +1,17 @@
 #!/bin/sh
-./rtokenize.rb -$1 < "$2" > out.token
+cat > input
+./rtokenize.rb -$1 < input > output
 rc=$?
 if [ $rc -ne 0 ]
 then
-	cat "$2"
+	cat input
+	exit 0
 fi
-./rlocalize.rb $1 out.token "$2"
+./rlocalize.rb $1 output input
 rc=$?
 if [ $rc -ne 0 ]
 then
-	cat "$2"
+	cat input
+	exit 0
 fi
-cat out.token
+cat output

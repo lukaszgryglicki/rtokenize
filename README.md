@@ -33,4 +33,4 @@ Some ready to go Shell scripts:
 - `./check_jsons.sh` - this is a check on all Kubernetes JSON files - to see if parser works for all of them.
 - `./check_yaml.sh file_name.yaml` - check tokenize & localize on single YAML file
 - `./check_json.sh file_name.json` - check tokenize & localize on single JSON file
-
+- `./rtokenize.sh y|j` - read YAML or JSON from stdin, output tokenized & localized to stdout
