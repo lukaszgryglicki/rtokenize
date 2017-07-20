@@ -3,6 +3,8 @@
 # did you know you can embed json in yaml?
 # try uncommenting the next line
 # { foo: 'bar' }
+# 1
+#
 
 json:
 # comment 1
@@ -20,6 +22,7 @@ object:
   array:
   - null_value: 
   - boolean: true
+  # comment in array
   - integer: 1
   flo: 1.234
   bigN: 643287462387423

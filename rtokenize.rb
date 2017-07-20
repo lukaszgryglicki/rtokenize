@@ -58,79 +58,79 @@ def load_with_comments(yf)
       next
     end
     while true
-       last_yline = yline
-       fline = flines[fi]
-       unless fline
-         msgsi << "Panic - out of sync and end of file reached" if verbose
-         failed = true
-         olines = ylines
-         broken = true
-         break
-       end
-       fline2 = sanitize_line(fline)
-       yline2 = sanitize_line(yline)
-       msgsi << "'#{yline}' <=> '#{fline}' --> #{fline == yline} (#{yline.length}, #{fline.length})" if verbose
-       msgso << "'#{yline2}' <=> '#{fline2}' --> #{fline2 == yline2}, #{fline2.index(yline2)}" if verbose
-       if !fline.include?('#') && !yline.include?('#') && !fline2.index(yline2) && !yline2.index(fline2)
-         fi += 1
-         c += 1
-         cmt = sanitize_comment(fline)
-         olines << "#{begin_syntax(olines.last)}#{comm}#{c}: #{cmt}"
-	 msgso << "Deep problems detected" if verbose
-         break
-       end
-       bro = false
-       artificial = []
-       while fline2 != '' && fline2 != yline2 && sidx = yline2.index(fline2)
-         artificial << sanitize_comment(fline) if artificial.length == 0
-         fi += 1
-         fline = flines[fi]
-         fline2 = sanitize_line(fline)
-         artificial << sanitize_comment(fline)
-         bro = true
-	 msgso << "Artificial case needed" if verbose
-       end
-       if bro
-         c += 1
-         cmt = artificial.join(' ')
-         olines << "#{begin_syntax(olines.last)}#{comm}#{c}: #{cmt}"
-         break
-       end
-       if fline2 == yline2
-         olines << yline
-         fi += 1
-         break
-       elsif sidx = fline2.index(yline2)
-         nline2 = sanitize_line(ylines[yidx+1])
-         cline = ''
-         if yidx < maxyidx && sidx2 = fline2.index(nline2)
-           cline = sanitize_comment(fline2[sidx2+nline2.length..-1])
-           yskip = true
-         elsif sidx == 0
-           # cline = sanitize_comment(fline[yline.length..-1])
-           cline = sanitize_comment(fline2[yline2.length..-1])
-         else
-           msgsi << "Panic in partial match" if verbose
-           failed = true
-           olines = ylines
-           broken = true
-           break
-         end
-         unless cline == ''
-           c += 1
-           olines << "#{begin_syntax(yline)}#{comm}#{c}: #{cline}"
-         end
-         olines << yline
-         fi += 1
-         break
-       else
-         cline = sanitize_comment(fline)
-         unless cline == ''
-           c += 1
-           olines << "#{begin_syntax(yline)}#{comm}#{c}: #{cline}"
-         end
-         fi += 1
-       end
+      last_yline = yline
+      fline = flines[fi]
+      unless fline
+        msgsi << "Panic - out of sync and end of file reached" if verbose
+        failed = true
+        olines = ylines
+        broken = true
+        break
+      end
+      fline2 = sanitize_line(fline)
+      yline2 = sanitize_line(yline)
+      msgsi << "'#{yline}' <=> '#{fline}' --> #{fline == yline} (#{yline.length}, #{fline.length})" if verbose
+      msgso << "'#{yline2}' <=> '#{fline2}' --> #{fline2 == yline2}, #{fline2.index(yline2)}" if verbose
+      if !fline.include?('#') && !yline.include?('#') && !fline2.index(yline2) && !yline2.index(fline2)
+        fi += 1
+        c += 1
+        cmt = sanitize_comment(fline)
+        olines << "#{begin_syntax(olines.last)}#{comm}#{c}: #{cmt}"
+        msgso << "Deep problems detected" if verbose
+        break
+      end
+      bro = false
+      artificial = []
+      while fline2 != '' && fline2 != yline2 && sidx = yline2.index(fline2)
+        artificial << sanitize_comment(fline) if artificial.length == 0
+        fi += 1
+        fline = flines[fi]
+        fline2 = sanitize_line(fline)
+        artificial << sanitize_comment(fline)
+        bro = true
+        msgso << "Artificial case needed" if verbose
+      end
+      if bro
+        c += 1
+        cmt = artificial.join(' ')
+        olines << "#{begin_syntax(olines.last)}#{comm}#{c}: #{cmt}"
+        break
+      end
+      if fline2 == yline2
+        olines << yline
+        fi += 1
+        break
+      elsif sidx = fline2.index(yline2)
+        nline2 = sanitize_line(ylines[yidx+1])
+        cline = ''
+        if yidx < maxyidx && sidx2 = fline2.index(nline2)
+          cline = sanitize_comment(fline2[sidx2+nline2.length..-1])
+          yskip = true
+        elsif sidx == 0
+          # cline = sanitize_comment(fline[yline.length..-1])
+          cline = sanitize_comment(fline2[yline2.length..-1])
+        else
+          msgsi << "Panic in partial match" if verbose
+          failed = true
+          olines = ylines
+          broken = true
+          break
+        end
+        unless cline == ''
+          c += 1
+          olines << "#{begin_syntax(yline)}#{comm}#{c}: #{cline}"
+        end
+        olines << yline
+        fi += 1
+        break
+      else
+        cline = sanitize_comment(fline)
+        unless cline == ''
+          c += 1
+          olines << "#{begin_syntax(yline)}#{comm}#{c}: #{cline}"
+        end
+        fi += 1
+      end
     end
   end
   fline = flines[fi]
@@ -161,6 +161,7 @@ def load_with_comments(yf)
     end
     return y
   end
+  # STDERR.puts y2.to_yaml
   STDERR.puts y2.to_yaml if verbose
   y2
 end
@@ -221,15 +222,17 @@ end
 def traverse_object(repr, o, oname = nil)
   $toi += 1
   $pi = 0
-  repr += emit_token('TYPE', o.class)
+  is_comment = oname && oname[0..10] == '__comment__'
+  repr += emit_token('TYPE', o.class) unless is_comment
   case o
   when Hash
-    repr += emit_token('IDENT', oname) if oname
+    repr += emit_token('IDENT', oname) if oname && !is_comment
     repr += emit_token('SYNTAX', '{')
     l = o.count - 1
     o.keys.each_with_index do |k, i|
+      kis_comment = k && k[0..10] == '__comment__'
       v = o[k]
-      repr += emit_token('KEY', k)
+      repr += emit_token('KEY', k) unless kis_comment
       opi = $pi
       repr = traverse_object(repr, v, k)
       $pi = opi
@@ -237,7 +240,7 @@ def traverse_object(repr, o, oname = nil)
     end
     repr += emit_token('SYNTAX', '}')
   when Array
-    repr += emit_token('IDENT', oname) if oname
+    repr += emit_token('IDENT', oname) if oname && !is_comment
     repr += emit_token('SYNTAX', '[')
     l = o.count - 1
     o.each_with_index do |r, i|
@@ -249,38 +252,38 @@ def traverse_object(repr, o, oname = nil)
     end
     repr += emit_token('SYNTAX',']')
   when NilClass
-    repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('NULL', 'NULL')
+    repr += emit_token('IDENT', oname) if oname && !is_comment
+    repr += emit_token(is_comment ? 'COMMENT' : 'NULL', 'NULL')
   when TrueClass
-    repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('BOOLEAN', 'TRUE')
+    repr += emit_token('IDENT', oname) if oname && !is_comment
+    repr += emit_token(is_comment ? 'COMMENT' : 'BOOLEAN', 'TRUE')
   when FalseClass
-    repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('BOOLEAN', 'FALSE')
+    repr += emit_token('IDENT', oname) if oname && !is_comment
+    repr += emit_token(is_comment ? 'COMMENT' : 'BOOLEAN', 'FALSE')
   when String
-    repr += emit_token('IDENT', oname) if oname
+    repr += emit_token('IDENT', oname) if oname && !is_comment
     o.split("\n").each do |ol|
       oa = split_if_needed(ol)
-      oa.each { |osp| repr += emit_token('STRING', osp) }
+      oa.each { |osp| repr += emit_token(is_comment ? 'COMMENT' : 'STRING', osp) }
     end
   when Symbol
-    repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('SYMBOL', o)
+    repr += emit_token('IDENT', oname) if oname && !is_comment
+    repr += emit_token(is_comment ? 'COMMENT' : 'SYMBOL', o)
   when Fixnum
-    repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('INT', o)
+    repr += emit_token('IDENT', oname) if oname && !is_comment
+    repr += emit_token(is_comment ? 'COMMENT' : 'INT', o)
   when Float
-    repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('FLOAT', o)
+    repr += emit_token('IDENT', oname) if oname && !is_comment
+    repr += emit_token(is_comment ? 'COMMENT' : 'FLOAT', o)
   when Bignum
-    repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('BIGNUM', o)
+    repr += emit_token('IDENT', oname) if oname && !is_comment
+    repr += emit_token(is_comment ? 'COMMENT' : 'BIGNUM', o)
   when Time
-    repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('TIME', o)
+    repr += emit_token('IDENT', oname) if oname && !is_comment
+    repr += emit_token(is_comment ? 'COMMENT' : 'TIME', o)
   when Date
-    repr += emit_token('IDENT', oname) if oname
-    repr += emit_token('DATE', o)
+    repr += emit_token('IDENT', oname) if oname && !is_comment
+    repr += emit_token(is_comment ? 'COMMENT' : 'DATE', o)
   else
     panic(4, "Unknown class #{o.class}", nil)
   end
