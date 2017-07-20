@@ -21,7 +21,8 @@ def sanitize_comment(comment)
 end
 
 def sanitize_line(line)
-  line.gsub(/['"\\\s]/, '').strip
+  # line.gsub(/['"\\\s]/, '').strip
+  line.gsub(/['"\\]/, '').strip
 end
 
 def load_with_comments(yf)
@@ -38,6 +39,11 @@ def load_with_comments(yf)
 
   flines = yf.split(/\n/).reject { |l| ['---', '...'].include?(l[0..2]) }
   ylines = ys.split(/\n/).reject { |l| ['---', '...'].include?(l[0..2]) }
+
+  # STDERR.puts "flines:"
+  # STDERR.puts flines.join("\n")
+  # STDERR.puts "ylines:"
+  # STDERR.puts ylines.join("\n")
 
   fi = 0
   c = 0
@@ -74,8 +80,10 @@ def load_with_comments(yf)
       if !fline.include?('#') && !yline.include?('#') && !fline2.index(yline2) && !yline2.index(fline2)
         fi += 1
         c += 1
-        cmt = sanitize_comment(fline)
-        olines << "#{begin_syntax(olines.last)}#{comm}#{c}: #{cmt}"
+	if olines.last
+          cmt = sanitize_comment(fline)
+          olines << "#{begin_syntax(olines.last)}#{comm}#{c}: #{cmt}"
+	end
         msgso << "Deep problems detected" if verbose
         break
       end
@@ -84,11 +92,15 @@ def load_with_comments(yf)
       while fline2 != '' && fline2 != yline2 && sidx = yline2.index(fline2)
         artificial << sanitize_comment(fline) if artificial.length == 0
         fi += 1
-        fline = flines[fi]
-        fline2 = sanitize_line(fline)
-        artificial << sanitize_comment(fline)
         bro = true
-        msgso << "Artificial case needed" if verbose
+        fline = flines[fi]
+	if fline
+          fline2 = sanitize_line(fline)
+          artificial << sanitize_comment(fline)
+          msgso << "Artificial case needed" if verbose
+	else
+          break
+	end
       end
       if bro
         c += 1
@@ -101,7 +113,7 @@ def load_with_comments(yf)
         fi += 1
         break
       elsif sidx = fline2.index(yline2)
-        nline2 = sanitize_line(ylines[yidx+1])
+        nline2 = yidx < maxyidx ? sanitize_line(ylines[yidx+1]) : ''
         cline = ''
         if yidx < maxyidx && sidx2 = fline2.index(nline2)
           cline = sanitize_comment(fline2[sidx2+nline2.length..-1])
@@ -116,11 +128,11 @@ def load_with_comments(yf)
           broken = true
           break
         end
+        olines << yline
         unless cline == ''
           c += 1
           olines << "#{begin_syntax(yline)}#{comm}#{c}: #{cline}"
         end
-        olines << yline
         fi += 1
         break
       else
@@ -222,7 +234,7 @@ end
 def traverse_object(repr, o, oname = nil)
   $toi += 1
   $pi = 0
-  is_comment = oname && oname[0..10] == '__comment__'
+  is_comment = oname && oname.to_s[0..10] == '__comment__'
   repr += emit_token('TYPE', o.class) unless is_comment
   case o
   when Hash
@@ -230,7 +242,7 @@ def traverse_object(repr, o, oname = nil)
     repr += emit_token('SYNTAX', '{')
     l = o.count - 1
     o.keys.each_with_index do |k, i|
-      kis_comment = k && k[0..10] == '__comment__'
+      kis_comment = k && k.to_s[0..10] == '__comment__'
       v = o[k]
       repr += emit_token('KEY', k) unless kis_comment
       opi = $pi
@@ -331,6 +343,7 @@ while true
   begin
     # STDERR.puts "PARSE: error=#{parse_error}, len=#{in_data.length}"
     data = parser.load(in_data)
+# =begin
   rescue Exception => e
     # STDERR.puts e
     if options.key?(:yaml)
@@ -361,6 +374,7 @@ while true
     end
     parse_error += 1
     next
+# =end
   end
   break
 end

@@ -12,6 +12,12 @@ $verbose = false
 $quiet = true
 
 $multi = false
+$prev_ends = 0
+
+def get_max_pos(len)
+  $prev_ends.to_f * 1.02 + 2 * len + 10
+end
+
 def lookup_token(ft, tp, val, buf, bufdc, pos)
   tp = tp.downcase
   STDERR.puts [tp, val] unless val[0] == '"' || $quiet
@@ -37,21 +43,35 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
   when *skip_types
   when *exact_types
     npos = buf.index(val, pos)
-    # if tp == 'string' && !npos # XXX
     if tp == 'int' && !npos
       vals = [
         '0' + val.to_i.to_s(010), 
         '0x' + val.to_i.to_s(0x10), 
-        '0X' + val.to_i.to_s(0X10)
+        '0X' + val.to_i.to_s(0X10),
+        val.to_i.to_s(10)
       ]
       npos = {}
       vals.each do |v|
         npos[v] = buf.index(v, pos)
       end
-      npos = npos.values.compact.min
+      minv = npos.keys.compact.first
+      minp = npos.values.compact.first
+      npos.each do |iv, pv|
+        next unless pv && pv < minp
+        minp = pv
+        minv = iv
+      end
+      npos = minp
       if npos
-        STDERR.puts "int: #{tp}: #{val}/equivalent found at #{npos} starting at #{pos}" if $verbose
-        pos = npos
+        max_possible = get_max_pos(minv.length)
+        if npos > max_possible
+          STDERR.puts "set_pos_int: #{npos} tp: #{tp} val: '#{val}' prev_ends: #{$prev_ends}, max_possible: #{max_possible}, err_rate: #{npos.to_f / max_possible}" if $verbose
+	else
+          pos = npos
+          $prev_ends = pos + minv.to_s.length + 1
+          STDERR.puts "int: #{tp}: #{val}/#{minv}/equivalent found at #{npos} starting at #{pos}" if $verbose
+          STDERR.puts "prev_ends: #{$prev_ends}" if $verbose
+	end
       else
         STDERR.puts "int: #{tp}: '#{val}' not found starting at #{pos}" unless npos || $quiet
       end
@@ -65,16 +85,25 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
       npos = buf.index(val, pos)
     end
     if npos
-       STDERR.puts "full: #{tp}: #{val} found at #{npos} starting at #{pos}" if $verbose
-       pos = npos
+      max_possible = get_max_pos(val.length)
+      if npos > max_possible
+        STDERR.puts "set_pos: #{npos} tp: #{tp} val: '#{val}' prev_ends: #{$prev_ends}, max_possible: #{max_possible}, err_rate: #{npos.to_f / max_possible}" if $verbose
+      else
+        pos = npos
+        STDERR.puts "full: #{tp}: #{val} found at #{npos} starting at #{pos}" if $verbose
+        $prev_ends = pos + val.length + 1
+        STDERR.puts "prev_ends: #{$prev_ends}" if $verbose
+      end
     else
       oldpos = pos
-      STDERR.puts "#{tp}: '#{val}' not found starting at #{pos}" if $verbose
+      max_pos = $prev_ends + val.length
+      STDERR.puts "#{tp}: '#{val}' not found starting at #{pos}, max_pos=#{max_pos}" if $verbose
+      nposs = []
       val.split.each do |word|
         npos = buf.index(word, pos)
         if npos
           STDERR.puts "word: #{tp}: #{word} found at #{npos} starting at #{pos}" if $verbose
-          pos = npos
+          nposs << npos
         else
           nwords = word.split(/[^a-zA-Z0-9_ ]/).reject { |s| s == '' }
           nwords.each do |w|
@@ -82,15 +111,25 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
             npos = buf.index(w, pos)
             if npos
               STDERR.puts "problematic #{tp}: #{word} found at #{npos} starting at #{pos}" if $verbose
-              pos = npos
+              nposs << npos
             else
               STDERR.puts "splitted word: #{tp}: '#{w}'/'#{word}/'#{val}' not found starting at #{pos}" if $verbose
             end
           end
         end
       end
+      STDERR.puts "max_pos: #{max_pos} ary: #{nposs.to_s}" if $verbose
+      oks = nposs.select { |p| p >= $prev_ends && p <= max_pos }
+      # oks = nposs.select { |p| p <= max_pos }
+      minp = oks.min
+      STDERR.puts "oks: #{oks.to_s}, min: #{minp}" if $verbose
+      if oks.length > 0 && nposs.all?
+         pos = minp
+         $prev_ends = pos + val.length + 1
+         STDERR.puts "prev_ends: #{$prev_ends}" if $verbose
+      end
       if pos == oldpos
-        STDERR.puts "VERY BAD: #{tp}: '#{val}' not found starting at #{pos}" unless $quiet
+        STDERR.puts "VERY BAD: #{tp}: '#{val}' not found starting at #{pos}, min_pos: #{$prev_ends}, max_pos: #{max_pos}, min: #{minp}, nposs: #{nposs.to_s}, oks: #{oks.to_s}" unless $quiet
         # panic "bye bye cruel world!"
       end
     end
@@ -99,8 +138,15 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
     valdc = valdc.split(' ').first if tp == 'time'
     npos = bufdc.index(valdc, pos)
     if npos
-       STDERR.puts "dc: #{tp}: #{valdc} found at #{npos} starting at #{pos}" if $verbose
-       pos = npos
+      max_possible = get_max_pos(valdc.length)
+      if npos > max_possible
+        STDERR.puts "set_pos_dc: #{npos} tp: #{tp} val: '#{val}' prev_ends: #{$prev_ends}, max_possible: #{max_possible}, err_rate: #{npos.to_f / max_possible}" if $verbose
+      else
+        pos = npos
+        $prev_ends = pos + valdc.length + 1
+        STDERR.puts "dc: #{tp}: #{val}/#{valdc} found at #{npos} starting at #{pos}" if $verbose
+        STDERR.puts "prev_ends: #{$prev_ends}" if $verbose
+      end
     else
       STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}" unless npos || $quiet
     end
@@ -112,10 +158,25 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
     vals.each do |v|
       npos[v] = bufdc.index(v, pos)
     end
-    npos = npos.values.compact.min
+    minv = npos.keys.compact.first
+    minp = npos.values.compact.first
+    npos.each do |iv, pv|
+      next unless pv && pv < minp
+      minp = pv
+      minv = iv
+    end
+    npos = minp
+    # npos = npos.values.compact.min
     if npos
-      STDERR.puts "boolean: #{tp}: #{valdc}/equivalent found at #{npos} starting at #{pos}" if $verbose
-      pos = npos
+      max_possible = get_max_pos(minv.length)
+      if npos > max_possible
+        STDERR.puts "set_pos_bool: #{npos} tp: #{tp} val: '#{val}' prev_ends: #{$prev_ends}, max_possible: #{max_possible}, err_rate: #{npos.to_f / max_possible}" if $verbose
+      else
+        pos = npos
+        $prev_ends = pos + minv.to_s.length + 1
+        STDERR.puts "boolean: #{tp}: #{valdc}/#{minv}/equivalent found at #{npos} starting at #{pos}" if $verbose
+        STDERR.puts "prev_ends: #{$prev_ends}" if $verbose
+      end
     else
       STDERR.puts "boolean: #{tp}: '#{valdc}' not found starting at #{pos}" unless npos || $quiet
     end

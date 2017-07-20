@@ -1,0 +1,5 @@
+object:
+        anInt: 0xf
+        anOct: 017
+        anDec: 10
+        anDec2: 15
