@@ -28,6 +28,13 @@ object:
   aDate: '2017-07-16'
   aTime: '22:35:12' # comment 5
   badFlo: 1e10
+  oneMoreStruct:
+    # comment 101
+    field1: xyz #comment 102 {{
+    field3: 'xyz' #comment 105 : -
+    # comment 103
+# comment 104
+    field2: 11
 paragraph: |
   # comment 6
   Blank lines denote

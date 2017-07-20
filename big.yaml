@@ -988,3 +988,4 @@ transparent_data_encryption_options:
             store_type: JCEKS
             key_password: cassandra
 
+

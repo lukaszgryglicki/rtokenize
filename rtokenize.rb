@@ -11,6 +11,166 @@ def panic(rcode, msg, e)
   exit(rcode)
 end
 
+def begin_syntax(line)
+  idx = line.index(/[^\s-]/)
+  (idx && idx > 0) ? line[0..idx-1] : ''
+end
+
+def sanitize_comment(comment)
+  comment.gsub(/[^a-z\d\w\s_]/i, '').strip
+end
+
+def sanitize_line(line)
+  line.gsub(/['"\\\s]/, '').strip
+end
+
+def load_with_comments(yf)
+  verbose = false
+  begin
+    y = YAML.load(yf)
+  rescue Exception => e
+    #puts yf
+    #puts e
+    #return [y, [yf, e]]
+    raise e
+  end
+  ys = y.to_yaml
+
+  flines = yf.split(/\n/).reject { |l| ['---', '...'].include?(l[0..2]) }
+  ylines = ys.split(/\n/).reject { |l| ['---', '...'].include?(l[0..2]) }
+
+  fi = 0
+  c = 0
+  failed = false
+  olines = []
+  comm = '__comment__'
+  last_yline = ''
+  msgsi = []
+  msgso = []
+  maxyidx = ylines.length - 1
+  maxfidx = flines.length - 1
+  yskip = false
+  broken = false
+  ylines.each_with_index do |yline, yidx|
+    break if broken
+    if yskip
+      yskip = false
+      next
+    end
+    while true
+       last_yline = yline
+       fline = flines[fi]
+       unless fline
+         msgsi << "Panic - out of sync and end of file reached" if verbose
+         failed = true
+         olines = ylines
+         broken = true
+         break
+       end
+       fline2 = sanitize_line(fline)
+       yline2 = sanitize_line(yline)
+       msgsi << "'#{yline}' <=> '#{fline}' --> #{fline == yline} (#{yline.length}, #{fline.length})" if verbose
+       msgso << "'#{yline2}' <=> '#{fline2}' --> #{fline2 == yline2}, #{fline2.index(yline2)}" if verbose
+       if !fline.include?('#') && !yline.include?('#') && !fline2.index(yline2) && !yline2.index(fline2)
+         fi += 1
+         c += 1
+         cmt = sanitize_comment(fline)
+         olines << "#{begin_syntax(olines.last)}#{comm}#{c}: #{cmt}"
+	 msgso << "Deep problems detected" if verbose
+         break
+       end
+       bro = false
+       artificial = []
+       while fline2 != '' && fline2 != yline2 && sidx = yline2.index(fline2)
+         artificial << sanitize_comment(fline) if artificial.length == 0
+         fi += 1
+         fline = flines[fi]
+         fline2 = sanitize_line(fline)
+         artificial << sanitize_comment(fline)
+         bro = true
+	 msgso << "Artificial case needed" if verbose
+       end
+       if bro
+         c += 1
+         cmt = artificial.join(' ')
+         olines << "#{begin_syntax(olines.last)}#{comm}#{c}: #{cmt}"
+         break
+       end
+       if fline2 == yline2
+         olines << yline
+         fi += 1
+         break
+       elsif sidx = fline2.index(yline2)
+         nline2 = sanitize_line(ylines[yidx+1])
+         cline = ''
+         if yidx < maxyidx && sidx2 = fline2.index(nline2)
+           cline = sanitize_comment(fline2[sidx2+nline2.length..-1])
+           yskip = true
+         elsif sidx == 0
+           # cline = sanitize_comment(fline[yline.length..-1])
+           cline = sanitize_comment(fline2[yline2.length..-1])
+         else
+           msgsi << "Panic in partial match" if verbose
+           failed = true
+           olines = ylines
+           broken = true
+           break
+         end
+         unless cline == ''
+           c += 1
+           olines << "#{begin_syntax(yline)}#{comm}#{c}: #{cline}"
+         end
+         olines << yline
+         fi += 1
+         break
+       else
+         cline = sanitize_comment(fline)
+         unless cline == ''
+           c += 1
+           olines << "#{begin_syntax(yline)}#{comm}#{c}: #{cline}"
+         end
+         fi += 1
+       end
+    end
+  end
+  fline = flines[fi]
+  while fline
+    cline = sanitize_comment(fline)
+    unless cline == ''
+      c += 1
+      olines << "#{begin_syntax(olines.last || '')}#{comm}#{c}: #{cline}"
+    end
+    fi += 1
+    fline = flines[fi]
+  end
+
+  if failed && verbose
+    info = "in:\n" + msgsi.join("\n") + "\n\nout:\n" + msgso.join("\n")
+    raise info
+  end
+  return y if failed
+
+  ydef = olines.join("\n")
+  begin
+    y2 = YAML.load(ydef)
+  rescue Exception => e
+    if verbose
+      puts ydef
+      puts e
+      raise e
+    end
+    return y
+  end
+  STDERR.puts y2.to_yaml if verbose
+  y2
+end
+
+class YAMLWithComments
+  def self.load(contents)
+    load_with_comments(contents)
+  end
+end
+
 $toi = 0
 $pi = 0
 $opts = nil
@@ -152,7 +312,7 @@ end.parse!
 
 parser = nil
 parser = JSON if options.key?(:json)
-parser = YAML if options.key?(:yaml)
+parser = YAMLWithComments if options.key?(:yaml)
 panic(1, 'No parser defined', nil) unless parser
 
 in_data = STDIN.read
@@ -169,6 +329,7 @@ while true
     # STDERR.puts "PARSE: error=#{parse_error}, len=#{in_data.length}"
     data = parser.load(in_data)
   rescue Exception => e
+    # STDERR.puts e
     if options.key?(:yaml)
       if parse_error == 0
         in_data.gsub!('{%', '<%')

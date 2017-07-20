@@ -1,0 +1,9 @@
+# This is the system spec that must be satisfied by the images running on GKE.
+
+os: Linux
+
+kernelSpec:
+  - name: DMIID
+    description: 'Make sure /sys/class/dmi is exported - cAdvisor currently
+      uses this to determine which the cloud provider it is: aws, azure, or
+      gce, etc' # ends with comment

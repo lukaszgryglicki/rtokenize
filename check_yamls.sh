@@ -8,6 +8,7 @@ do
 	if [ $rc -ne 0 ]
 	then
 		echo "Tokenize $f => $rc"
+		#read c
 	fi
 	res=`./rlocalize.rb yaml out "$f" 0`
 	rc=$?
