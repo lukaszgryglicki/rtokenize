@@ -23,7 +23,7 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
   case ft
   when 'y'
     skip_types = %w(type index syntax filetype)
-    exact_types = %w(ident key string symbol int bignum)
+    exact_types = %w(comment ident key string symbol int bignum)
     dc_types = %w(float date time)
   when 'j'
     skip_types = %w(type index filetype)
@@ -137,6 +137,7 @@ def rlocalize(args)
   end
   bufdc = buf.downcase
   types = %w(BIGNUM BOOLEAN DATE FILETYPE FLOAT IDENT INDEX INT KEY MULTI NULL STRING SYMBOL SYNTAX TIME TYPE)
+  types << 'COMMENT' if ftype == 'y'
   converted = false
   localized = false
   lines = []
