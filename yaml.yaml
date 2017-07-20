@@ -5,14 +5,17 @@
 # { foo: 'bar' }
 
 json:
+# comment 1
 - rigid
 - better for data interchange
 - false
 yaml:
+# comment 2
 - slim and flexible
 - better for configuration
 - true
 object:
+# comment 3
   key: value
   array:
   - null_value: 
@@ -21,14 +24,18 @@ object:
   flo: 1.234
   bigN: 643287462387423
   aDateTime: '2017-07-16T22:35:12Z'
+  # comment 4
   aDate: '2017-07-16'
-  aTime: '22:35:12'
+  aTime: '22:35:12' # comment 5
   badFlo: 1e10
 paragraph: |
+  # comment 6
   Blank lines denote
-  paragraph breaks
+  # comment 7
+  paragraph breaks # comment 8
 content: |-
   Or we
   can auto
   convert line breaks
-  to save space
+  to save space # comment 9
+# comment 10

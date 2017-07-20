@@ -1,7 +1,7 @@
 #!/bin/sh
 input=`mktemp`
 output=`mktemp`
-echo "start: $input $output" >> rtokenize.log
+echo "start: $input $output" > rtokenize.log
 # start: to remove
 # cat
 # rm -f $input $output 2>/dev/null

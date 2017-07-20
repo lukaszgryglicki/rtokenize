@@ -8,11 +8,13 @@ end
 # Debugging output
 $verbose = false
 # $verbose = true
+# $quiet = false
+$quiet = true
 
 $multi = false
 def lookup_token(ft, tp, val, buf, bufdc, pos)
   tp = tp.downcase
-  STDERR.puts [tp, val] unless val[0] == '"'
+  STDERR.puts [tp, val] unless val[0] == '"' || $quiet
   val = val[1..-2]
  
   skip_types = []
@@ -51,7 +53,7 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
         STDERR.puts "int: #{tp}: #{val}/equivalent found at #{npos} starting at #{pos}" if $verbose
         pos = npos
       else
-        STDERR.puts "int: #{tp}: '#{val}' not found starting at #{pos}" unless npos
+        STDERR.puts "int: #{tp}: '#{val}' not found starting at #{pos}" unless npos || $quiet
       end
     end
     if !npos
@@ -88,7 +90,7 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
         end
       end
       if pos == oldpos
-        STDERR.puts "VERY BAD: #{tp}: '#{val}' not found starting at #{pos}"
+        STDERR.puts "VERY BAD: #{tp}: '#{val}' not found starting at #{pos}" unless $quiet
         # panic "bye bye cruel world!"
       end
     end
@@ -100,7 +102,7 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
        STDERR.puts "dc: #{tp}: #{valdc} found at #{npos} starting at #{pos}" if $verbose
        pos = npos
     else
-      STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}" unless npos
+      STDERR.puts "#{tp}: '#{valdc}' not found starting at #{pos}" unless npos || $quiet
     end
   when 'boolean'
     valdc = val.downcase
@@ -115,7 +117,7 @@ def lookup_token(ft, tp, val, buf, bufdc, pos)
       STDERR.puts "boolean: #{tp}: #{valdc}/equivalent found at #{npos} starting at #{pos}" if $verbose
       pos = npos
     else
-      STDERR.puts "boolean: #{tp}: '#{valdc}' not found starting at #{pos}" unless npos
+      STDERR.puts "boolean: #{tp}: '#{valdc}' not found starting at #{pos}" unless npos || $quiet
     end
   when 'multi'
     $multi = true
@@ -142,7 +144,7 @@ def rlocalize(args)
     ta = line.strip.split('|')
     ttype = ta[0]
     tvalue = ta[1]
-    localized = true if ta.length >= 3
+    localized = true if ta.length >= 3 && ta.last.to_i.to_s == ta.last
     panic("Unknown token type: #{ttype}") unless types.include?(ttype)
     pos = lookup_token(ftype, ttype, tvalue, buf, bufdc, pos)
     if ftype == 'j' && $multi && !converted
