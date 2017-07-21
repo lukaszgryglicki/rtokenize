@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+require 'yaml'
+require 'json'
+
 def panic(why)
   STDERR.puts why
   exit 1
